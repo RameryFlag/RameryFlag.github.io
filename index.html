@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kakko. ｜ タイムライン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2b2016;
+    --ink-soft: #3a2c1d;
+    --ink-line: rgba(243, 230, 210, 0.10);
+    --paper-text: #f4ead9;
+    --muted: #b6a289;
+    --accent: #e07b2e;
+    --accent-soft: rgba(224, 123, 46, 0.18);
+    --seal: #232c46;
+    --seal-line: rgba(226, 224, 240, 0.14);
+    --seal-text: #eef0f7;
+    --seal-muted: #a7aec8;
+    --avatar-1: #e2833c;
+    --avatar-2: #7089b3;
+    --avatar-3: #82946b;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--ink);
+  }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    color: var(--paper-text);
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(224, 123, 46, 0.10), transparent 60%),
+      var(--ink);
+  }
+
+  .layout {
+    display: flex;
+  }
+
+  /* ---------- left sidebar nav (desktop only) ---------- */
+
+  .sidenav {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 248px;
+    flex: none;
+    min-height: 100vh;
+    padding: 26px 16px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+  }
+
+  .sidenav-wordmark {
+    margin: 0 0 28px;
+    padding-left: 12px;
+  }
+
+  .sidenav-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: 999px;
+    background: none;
+    border: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: left;
+    text-decoration: none;
+    width: 100%;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .nav-item:hover { background: rgba(243, 230, 210, 0.06); color: var(--paper-text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+
+  .nav-icon { flex: none; display: flex; }
+  .nav-icon svg { display: block; }
+
+  .sidenav-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.2s ease;
+  }
+
+  .sidenav-profile:hover { background: rgba(243, 230, 210, 0.06); }
+
+  .sidenav-profile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .sidenav-profile-text .name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--paper-text);
+  }
+
+  .sidenav-profile-text .handle {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  /* ---------- toast ---------- */
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(10px);
+    opacity: 0;
+    pointer-events: none;
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-line);
+    color: var(--paper-text);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 50;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ---------- main app column ---------- */
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--ink-line);
+    border-right: 1px solid var(--ink-line);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(43, 32, 22, 0.92);
+    backdrop-filter: blur(10px);
+    padding: 20px 22px 0;
+  }
+
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 21px;
+    letter-spacing: 0.01em;
+    color: var(--paper-text);
+    margin: 0 0 18px;
+  }
+
+  .wordmark svg { flex: none; }
+
+  .tabs {
+    position: relative;
+    display: flex;
+    gap: 26px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    appearance: none;
+    background: none;
+    border: none;
+    flex: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 0 0 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.25s ease;
+  }
+
+  .tab:hover { color: var(--paper-text); }
+  .tab.active { color: var(--paper-text); }
+
+  .tab:focus-visible,
+  .veil-trigger:focus-visible,
+  .engage-btn:focus-visible,
+  .hide-again:focus-visible,
+  .composer-input:focus-visible,
+  .composer-select:focus-visible,
+  .composer-submit:focus-visible,
+  .composer-cancel:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .tab-track {
+    position: relative;
+    height: 1px;
+    background: var(--ink-line);
+  }
+
+  .tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: left 0.3s cubic-bezier(.65,0,.35,1), width 0.3s cubic-bezier(.65,0,.35,1);
+  }
+
+  /* ---------- composer ---------- */
+
+  .composer {
+    margin: 18px 22px 4px;
+    padding: 14px 16px;
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-line);
+    border-radius: var(--radius);
+    transition: padding 0.3s ease;
+  }
+
+  .composer-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .composer-input {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    background: none;
+    border: none;
+    color: var(--paper-text);
+    font-family: 'Manrope', sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 7px 0;
+    min-height: 24px;
+  }
+
+  .composer-input::placeholder { color: var(--muted); }
+  .composer-input:focus { outline: none; }
+
+  .composer-foot {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ink-line);
+  }
+
+  .composer.is-active .composer-foot { display: flex; }
+
+  .composer-select-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .composer-select {
+    appearance: none;
+    width: 100%;
+    background: rgba(242, 239, 230, 0.06);
+    border: 1px solid var(--ink-line);
+    color: var(--paper-text);
+    font-family: 'Manrope', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 7px 30px 7px 13px;
+    cursor: pointer;
+  }
+
+  .composer-select option { background: var(--ink-soft); color: var(--paper-text); }
+
+  .composer-select-wrap::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1.4px solid var(--muted);
+    border-bottom: 1.4px solid var(--muted);
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  .composer-actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .composer-cancel {
+    appearance: none;
+    background: none;
+    border: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 8px 4px;
+  }
+
+  .composer-cancel:hover { color: var(--paper-text); }
+
+  .composer-submit {
+    appearance: none;
+    border: none;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .composer-submit:hover { transform: translateY(-1px); }
+  .composer-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .composer-hint {
+    font-size: 11.5px;
+    color: var(--accent);
+    margin: 8px 2px 0;
+    display: none;
+  }
+
+  .composer-hint.show { display: block; }
+
+  /* ---------- composer tools (image / video / quote) ---------- */
+
+  .composer-tools {
+    display: flex;
+    gap: 4px;
+    flex: none;
+  }
+
+  .tool-btn {
+    appearance: none;
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .tool-btn:hover { background: rgba(243, 230, 210, 0.08); color: var(--accent); }
+  .tool-btn.active { color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- attachment / quote preview in composer ---------- */
+
+  .attach-preview, .quote-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0 0 48px;
+    padding: 10px 12px;
+    background: rgba(243, 230, 210, 0.05);
+    border: 1px solid var(--ink-line);
+    border-radius: 12px;
+  }
+
+  .attach-preview[hidden], .quote-preview[hidden] { display: none; }
+
+  .attach-thumb {
+    flex: none;
+    width: 58px;
+    height: 44px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--avatar-2), #2e4468 70%, var(--ink-soft));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f4ead9;
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+
+  .attach-remove {
+    flex: none;
+    appearance: none;
+    background: rgba(243, 230, 210, 0.1);
+    border: none;
+    color: var(--muted);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .attach-remove:hover { color: var(--paper-text); }
+
+  .attach-label { flex: 1; font-size: 12.5px; color: var(--muted); }
+
+  .quote-preview-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quote-preview-body { flex: 1; min-width: 0; }
+
+  .quote-preview-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    color: var(--paper-text);
+    margin: 0 0 2px;
+  }
+
+  .quote-preview-meta { font-size: 11.5px; color: var(--muted); margin: 0; }
+
+  /* ---------- quote embed inside a post ---------- */
+
+  .quote-embed {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 11px 13px;
+    background: rgba(243, 230, 210, 0.05);
+    border: 1px solid var(--ink-line);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .quote-embed:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+  .quote-embed-icon {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quote-embed-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+  .quote-embed-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    color: var(--paper-text);
+  }
+
+  .quote-embed-meta { font-size: 11.5px; color: var(--muted); }
+
+  .quote-embed-arrow { flex: none; color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    font-family: 'Manrope', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: 3px;
+    vertical-align: middle;
+  }
+
+  .badge-type { background: rgba(243, 230, 210, 0.10); color: var(--muted); }
+
+  /* ---------- post media (attached image / video) ---------- */
+
+  .post-media {
+    margin: 0 0 12px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--ink-line);
+    background: linear-gradient(135deg, var(--avatar-2), #2e4468 70%, var(--ink-soft));
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(244, 234, 217, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ---------- work picker palette ---------- */
+
+  .palette-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(20, 14, 9, 0.7);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .palette-overlay[hidden] { display: none; }
+
+  .palette {
+    width: 100%;
+    max-width: 440px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .palette-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ink-line);
+  }
+
+  .palette-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--paper-text);
+    margin: 0;
+  }
+
+  .palette-close {
+    appearance: none;
+    background: rgba(243, 230, 210, 0.08);
+    border: none;
+    color: var(--muted);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .palette-close:hover { color: var(--paper-text); }
+
+  .palette-list { overflow-y: auto; padding: 6px; }
+
+  .palette-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    appearance: none;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 10px 11px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s ease;
+  }
+
+  .palette-item:hover { background: rgba(243, 230, 210, 0.06); }
+
+  .palette-item-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .palette-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+  .palette-item-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    color: var(--paper-text);
+  }
+
+  .palette-item-meta { font-size: 11.5px; color: var(--muted); }
+
+  /* ---------- feed ---------- */
+
+  .feed {
+    flex: 1;
+    padding: 6px 22px 60px;
+  }
+
+  .feed[hidden] { display: none; }
+
+  .post {
+    padding: 22px 0;
+    border-bottom: 1px solid var(--ink-line);
+    animation: none;
+  }
+
+  .feed > .post:last-child { border-bottom: none; }
+
+  .post.is-new {
+    animation: dropIn 0.5s ease;
+  }
+
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .post-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-bottom: 10px;
+  }
+
+  .avatar {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .avatar.a1 { background: var(--avatar-1); }
+  .avatar.a2 { background: var(--avatar-2); }
+  .avatar.a3 { background: var(--avatar-3); }
+
+  .post-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15.5px;
+    color: var(--paper-text);
+  }
+
+  .community {
+    align-self: flex-start;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .time {
+    flex: none;
+    font-size: 12.5px;
+    color: var(--muted);
+    padding-top: 2px;
+  }
+
+  .body {
+    margin: 0 0 12px;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--paper-text);
+    white-space: pre-wrap;
+  }
+
+  .engage {
+    display: flex;
+    gap: 18px;
+  }
+
+  .engage-btn {
+    appearance: none;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 2px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .engage-btn svg { flex: none; }
+  .engage-btn:hover { color: var(--paper-text); }
+  .engage-btn.like:hover,
+  .engage-btn.like.active { color: var(--accent); }
+
+  /* ---------- veiled (spoiler-safe) post ---------- */
+
+  .post.veil {
+    border-bottom: none;
+    padding: 0 0 22px;
+  }
+
+  .veil-card {
+    background: var(--seal);
+    border: 1px solid var(--seal-line);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: background-color 0.5s ease, border-color 0.5s ease, padding 0.5s ease;
+  }
+
+  .veil-trigger {
+    appearance: none;
+    width: 100%;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .seal-icon {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(226, 224, 240, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .veil-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .veil-text strong {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--seal-text);
+  }
+
+  .veil-text small {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--seal-muted);
+  }
+
+  .veil-cta {
+    flex: none;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--seal-text);
+    padding: 8px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+  }
+
+  .veil-trigger:hover .veil-cta { transform: translateY(-1px); }
+
+  .veil-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.45s ease, opacity 0.35s ease 0.05s, margin-top 0.45s ease;
+  }
+
+  .post.veil.is-open .veil-card {
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
+  }
+
+  .post.veil.is-open .veil-trigger { display: none; }
+
+  .post.veil.is-open .veil-content {
+    max-height: 500px;
+    opacity: 1;
+    margin-top: 2px;
+  }
+
+  .hide-again {
+    appearance: none;
+    background: none;
+    border: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 2px 0 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .hide-again:hover { color: var(--paper-text); }
+
+  @media (min-width: 980px) {
+    .sidenav { display: flex; }
+    .topbar .wordmark { display: none; }
+    .app { max-width: 1040px; flex: 1 1 auto; }
+  }
+
+  @media (max-width: 560px) {
+    .composer-foot { flex-wrap: wrap; }
+    .composer-select-wrap { order: 3; flex-basis: 100%; min-width: 0; }
+    .composer-tools { order: 1; }
+    .composer-actions { order: 2; margin-left: auto; }
+  }
+
+  @media (max-width: 380px) {
+    .topbar { padding: 16px 16px 0; }
+    .feed { padding: 4px 16px 50px; }
+    .composer { margin: 16px 16px 4px; }
+    .veil-trigger { flex-wrap: wrap; }
+    .veil-text { min-width: 100%; order: 1; }
+    .seal-icon { order: 0; }
+    .veil-cta { order: 2; margin: 4px 0 0 48px; }
+    .attach-preview, .quote-preview { margin-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidenav">
+    <div class="sidenav-top">
+      <p class="wordmark sidenav-wordmark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M14 8.6A6 6 0 1 1 7.4 2 4.8 4.8 0 0 0 14 8.6Z" stroke="#e07b2e" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        kakko.
+      </p>
+      <nav class="sidenav-nav" aria-label="メインメニュー">
+        <button class="nav-item active" data-nav="timeline" type="button">
+          <span class="nav-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M3 6.5h13M3 9.5h13M3 12.5h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span>タイムライン</span>
+        </button>
+        <a class="nav-item" href="search.html" data-nav="search">
+          <span class="nav-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><circle cx="8.5" cy="8.5" r="5" stroke="currentColor" stroke-width="1.4"/><path d="M12.3 12.3 16 16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span>検索</span>
+        </a>
+        <button class="nav-item" data-nav="settings" type="button">
+          <span class="nav-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><circle cx="9.5" cy="9.5" r="2.6" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 3.2v2M9.5 13.3v2M15.8 9.5h-2M5.2 9.5h-2M13.9 5.1l-1.4 1.4M6.5 12.5l-1.4 1.4M13.9 13.9l-1.4-1.4M6.5 6.5 5.1 5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span>設定</span>
+        </button>
+        <a class="nav-item" href="works.html" data-nav="works">
+          <span class="nav-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M3.5 3.8h5.2v11.4H3.5zM10.2 4.6l4.7-1 2.4 11.2-4.7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </span>
+          <span>作品</span>
+        </a>
+        <a class="nav-item" href="community.html" data-nav="community">
+          <span class="nav-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><circle cx="6.8" cy="7.6" r="3" stroke="currentColor" stroke-width="1.3"/><circle cx="13.2" cy="7.6" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 15.5c0-2.6 2.1-4.2 4.8-4.2s4.8 1.6 4.8 4.2M9.2 11.6c.6-.2 1.3-.3 2-.3 2.7 0 4.8 1.6 4.8 4.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </span>
+          <span>コミュニティ</span>
+        </a>
+      </nav>
+    </div>
+    <button class="sidenav-profile" type="button">
+      <div class="avatar a1">あ</div>
+      <div class="sidenav-profile-text">
+        <span class="name">あなた</span>
+        <span class="handle">プロフィール</span>
+      </div>
+    </button>
+  </aside>
+
+  <div class="app">
+
+    <header class="topbar">
+      <p class="wordmark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M14 8.6A6 6 0 1 1 7.4 2 4.8 4.8 0 0 0 14 8.6Z" stroke="#e07b2e" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        kakko.
+      </p>
+      <nav class="tabs" role="tablist" aria-label="タイムライン切り替え">
+        <button class="tab active" role="tab" aria-selected="true" data-feed="follow">フォロー</button>
+        <button class="tab" role="tab" aria-selected="false" data-feed="hai">灰と星屑 感想部</button>
+        <button class="tab" role="tab" aria-selected="false" data-feed="silent">サイレント・チャプター部</button>
+      </nav>
+      <div class="tab-track"><span class="tab-indicator"></span></div>
+    </header>
+
+    <!-- ===== 投稿コンポーザー ===== -->
+    <section class="composer" id="composer">
+      <div class="composer-row">
+        <div class="avatar a1">あ</div>
+        <textarea
+          class="composer-input"
+          id="composer-input"
+          placeholder="いま感じたことをシェアしよう"
+          rows="1"
+        ></textarea>
+      </div>
+
+      <!-- 添付プレビュー（画像・動画デモ） -->
+      <div class="attach-preview" id="attach-preview" hidden>
+        <div class="attach-thumb" id="attach-thumb"></div>
+        <button class="attach-remove" id="attach-remove" type="button" aria-label="添付を削除">×</button>
+      </div>
+
+      <!-- 引用プレビュー -->
+      <div class="quote-preview" id="quote-preview" hidden>
+        <div class="quote-preview-icon" id="quote-preview-icon"></div>
+        <div class="quote-preview-body">
+          <p class="quote-preview-title" id="quote-preview-title"></p>
+          <p class="quote-preview-meta" id="quote-preview-meta"></p>
+        </div>
+        <button class="attach-remove" id="quote-remove" type="button" aria-label="引用を解除">×</button>
+      </div>
+
+      <div class="composer-foot">
+        <div class="composer-tools">
+          <button class="tool-btn" id="tool-image" type="button" title="画像を添付">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="2.8" y="3.8" width="14.4" height="12.4" rx="1.6" stroke="currentColor" stroke-width="1.3"/><circle cx="7.2" cy="8" r="1.3" stroke="currentColor" stroke-width="1.2"/><path d="M3.4 14.2l4.6-4.6 3.6 3.6 2.1-2.1 3.3 3.3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="tool-btn" id="tool-video" type="button" title="動画を添付">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4.5" width="10.5" height="11" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M13 9.2l4.5-2.4v6.4L13 10.8z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="tool-btn" id="tool-quote" type="button" title="作品を引用">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M5 6.5h10M5 10h10M5 13.5h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="composer-select-wrap">
+          <select class="composer-select" id="composer-select">
+            <option value="">投稿するコミュニティを選択</option>
+            <option value="hai">灰と星屑 感想部</option>
+            <option value="silent">サイレント・チャプター部</option>
+          </select>
+        </div>
+        <div class="composer-actions">
+          <button class="composer-cancel" id="composer-cancel" type="button">キャンセル</button>
+          <button class="composer-submit" id="composer-submit" type="button" disabled>投稿する</button>
+        </div>
+      </div>
+      <p class="composer-hint" id="composer-hint">投稿するコミュニティを選択してください</p>
+    </section>
+
+    <!-- ===== 作品引用パレット ===== -->
+    <div class="palette-overlay" id="palette-overlay" hidden>
+      <div class="palette" role="dialog" aria-label="引用する作品を選ぶ">
+        <div class="palette-head">
+          <p class="palette-title">引用する作品を選ぶ</p>
+          <button class="palette-close" id="palette-close" type="button" aria-label="閉じる">×</button>
+        </div>
+        <div class="palette-list" id="palette-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== フォローTL：参加コミュニティ外の投稿はワンクッションを挟む ===== -->
+    <main class="feed" id="feed-follow">
+
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a1">ゆ</div>
+          <div class="post-meta">
+            <span class="name">ゆき</span>
+            <span class="community">灰と星屑 感想部</span>
+          </div>
+          <time class="time">10分前</time>
+        </div>
+        <p class="body">積読解消するぞの意気込みで開いた『夜想曲のリベルタ』1巻、もう心を持っていかれた…</p>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            18
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            2
+          </button>
+        </div>
+      </article>
+
+      <article class="post veil" id="veil-1">
+        <div class="veil-card">
+          <button class="veil-trigger" aria-expanded="false" aria-controls="veil-content-1">
+            <span class="seal-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5 9.6 5l3.9.4-2.9 2.6.8 3.8L8 9.8l-3.4 1.9.8-3.8-2.9-2.6L6.4 5 8 1.5Z" stroke="#eef0f7" stroke-width="1.1" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="veil-text">
+              <strong>コミュニティ外の投稿です</strong>
+              <small>「夜想曲のリベルタを語る会」の内容が含まれる可能性があります</small>
+            </span>
+            <span class="veil-cta">そっと開く</span>
+          </button>
+          <div class="veil-content" id="veil-content-1">
+            <div class="post-head" style="margin-top:16px;">
+              <div class="avatar a2">は</div>
+              <div class="post-meta">
+                <span class="name">はると</span>
+                <span class="community">夜想曲のリベルタを語る会</span>
+              </div>
+              <time class="time">25分前</time>
+            </div>
+            <p class="body">え、あの二人がまさかの再会…？！ここからどう転がるのか全く読めない</p>
+            <div class="engage" style="margin-bottom:12px;">
+              <button class="engage-btn like" aria-label="いいね">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                9
+              </button>
+              <button class="engage-btn" aria-label="コメント">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                1
+              </button>
+            </div>
+            <button class="hide-again">隠す</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a3">せ</div>
+          <div class="post-meta">
+            <span class="name">せんな</span>
+            <span class="community">サイレント・チャプター部</span>
+          </div>
+          <time class="time">40分前</time>
+        </div>
+        <p class="body">3話の演出、完全に映画だった…円盤絶対買う。</p>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            40
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            6
+          </button>
+        </div>
+      </article>
+
+      <!-- ===== 引用投稿のデモ（クリックで作品閲覧画面へ） ===== -->
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a2">り</div>
+          <div class="post-meta">
+            <span class="name">りく</span>
+            <span class="community">灰と星屑 感想部</span>
+          </div>
+          <time class="time">1時間前</time>
+        </div>
+        <p class="body">このコマの構図がとにかく好き。原作の静けさがそのまま絵になってる。</p>
+        <a class="quote-embed" href="works-view.html?id=hai-manga">
+          <span class="quote-embed-icon" style="background: linear-gradient(135deg, var(--avatar-1), #7a3a2c 65%, var(--ink-soft));">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="1.6" stroke="#f4ead9" stroke-width="1.1"/><circle cx="8.5" cy="9.5" r="1.6" stroke="#f4ead9" stroke-width="1.1"/><path d="M4 17l5.5-5.5L14 16l2.5-2.5L20.5 18" stroke="#f4ead9" stroke-width="1.1" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="quote-embed-body">
+            <span class="quote-embed-title">灰と星屑 コミカライズ版 <span class="badge badge-type">画像</span></span>
+            <span class="quote-embed-meta">みずき ・ 閲覧 1.8万</span>
+          </span>
+          <span class="quote-embed-arrow" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4.5L5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </a>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            52
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            7
+          </button>
+        </div>
+      </article>
+
+      <!-- ===== ミュートワードを含む投稿のデモ（ワンクッション） ===== -->
+      <article class="post veil" id="veil-2">
+        <div class="veil-card">
+          <button class="veil-trigger" aria-expanded="false" aria-controls="veil-content-2">
+            <span class="seal-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4Z" stroke="#eef0f7" stroke-width="1.1" stroke-linejoin="round"/><path d="M3 3l10 10" stroke="#eef0f7" stroke-width="1.1" stroke-linecap="round"/></svg>
+            </span>
+            <span class="veil-text">
+              <strong>ミュートワードを含む投稿です</strong>
+              <small>ミュート設定中の「最終話」が含まれています</small>
+            </span>
+            <span class="veil-cta">そっと開く</span>
+          </button>
+          <div class="veil-content" id="veil-content-2">
+            <div class="post-head" style="margin-top:16px;">
+              <div class="avatar a1">ゆ</div>
+              <div class="post-meta">
+                <span class="name">ゆき</span>
+                <span class="community">灰と星屑 感想部</span>
+              </div>
+              <time class="time">2時間前</time>
+            </div>
+            <p class="body">最終話の展開、完全に予想を裏切られた…あの一行で全部ひっくり返るとは思わなかった。</p>
+            <div class="engage" style="margin-bottom:12px;">
+              <button class="engage-btn like" aria-label="いいね">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                33
+              </button>
+              <button class="engage-btn" aria-label="コメント">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                4
+              </button>
+            </div>
+            <button class="hide-again">隠す</button>
+          </div>
+        </div>
+      </article>
+
+    </main>
+
+    <!-- ===== 灰と星屑 感想部：コミュニティTL ===== -->
+    <main class="feed" id="feed-hai" hidden>
+
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a1">ゆ</div>
+          <div class="post-meta">
+            <span class="name">ゆき</span>
+            <span class="community">灰と星屑 感想部</span>
+          </div>
+          <time class="time">3分前</time>
+        </div>
+        <p class="body">最終話、まさかあの伏線がここで回収されるとは…完全に予想を裏切られた。読み終えた後もしばらく放心してた。</p>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            24
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            5
+          </button>
+        </div>
+      </article>
+
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a2">り</div>
+          <div class="post-meta">
+            <span class="name">りく</span>
+            <span class="community">灰と星屑 感想部</span>
+          </div>
+          <time class="time">2時間前</time>
+        </div>
+        <p class="body">3巻の表紙、伏線だったのか…読み返して鳥肌立った。</p>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            31
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            3
+          </button>
+        </div>
+      </article>
+
+    </main>
+
+    <!-- ===== サイレント・チャプター部：コミュニティTL ===== -->
+    <main class="feed" id="feed-silent" hidden>
+
+      <article class="post">
+        <div class="post-head">
+          <div class="avatar a3">せ</div>
+          <div class="post-meta">
+            <span class="name">せんな</span>
+            <span class="community">サイレント・チャプター部</span>
+          </div>
+          <time class="time">1時間前</time>
+        </div>
+        <p class="body">OPのアニメーションが毎回芸術点高すぎる。今期一番かもしれない。</p>
+        <div class="engage">
+          <button class="engage-btn like" aria-label="いいね">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            56
+          </button>
+          <button class="engage-btn" aria-label="コメント">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            12
+          </button>
+        </div>
+      </article>
+
+    </main>
+
+  </div>
+
+</div>
+
+<script>
+  // ---- tab switching ----
+  const tabs = document.querySelectorAll('.tab');
+  const indicator = document.querySelector('.tab-indicator');
+  const feeds = {
+    follow: document.getElementById('feed-follow'),
+    hai: document.getElementById('feed-hai'),
+    silent: document.getElementById('feed-silent'),
+  };
+
+  function positionIndicator(tab) {
+    indicator.style.left = tab.offsetLeft + 'px';
+    indicator.style.width = tab.offsetWidth + 'px';
+  }
+
+  function activateTab(tab) {
+    tabs.forEach(t => {
+      t.classList.toggle('active', t === tab);
+      t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+    });
+    Object.entries(feeds).forEach(([key, el]) => {
+      el.hidden = key !== tab.dataset.feed;
+    });
+    positionIndicator(tab);
+  }
+
+  tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.tab.active');
+    if (active) positionIndicator(active);
+  });
+  positionIndicator(document.querySelector('.tab.active'));
+
+  // ---- spoiler veil reveal ----
+  document.querySelectorAll('.veil-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const post = btn.closest('.post');
+      post.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+    });
+  });
+
+  document.querySelectorAll('.hide-again').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const post = btn.closest('.post');
+      post.classList.remove('is-open');
+      const trigger = post.querySelector('.veil-trigger');
+      trigger.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // ---- like buttons (purely visual, demo only) ----
+  document.querySelectorAll('.engage-btn.like').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const countEl = btn.childNodes[btn.childNodes.length - 1];
+      const current = parseInt(btn.textContent.trim(), 10);
+      const liked = btn.classList.toggle('active');
+      countEl.textContent = ' ' + (liked ? current + 1 : current - 1);
+    });
+  });
+
+  // ---- composer ----
+  const composer = document.getElementById('composer');
+  const composerInput = document.getElementById('composer-input');
+  const composerSelect = document.getElementById('composer-select');
+  const composerSubmit = document.getElementById('composer-submit');
+  const composerCancel = document.getElementById('composer-cancel');
+  const composerHint = document.getElementById('composer-hint');
+
+  const communityNames = {
+    hai: '灰と星屑 感想部',
+    silent: 'サイレント・チャプター部',
+  };
+
+  // ---- 引用できる作品カタログ（デモ） ----
+  const WORK_ICONS = {
+    novel: '<svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M11 2 13.8 8.4 20.8 9 15.4 13.6 17 20.4 11 16.7 5 20.4 6.6 13.6 1.2 9 8.2 8.4 11 2Z" stroke="#f4ead9" stroke-width="1.1" stroke-linejoin="round"/></svg>',
+    blog: '<svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M4 4.5h9l3 3v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z" stroke="#f4ead9" stroke-width="1.1" stroke-linejoin="round"/><path d="M6.5 9h7M6.5 12h7M6.5 15h4" stroke="#f4ead9" stroke-width="1" stroke-linecap="round"/></svg>',
+    manga: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="1.6" stroke="#f4ead9" stroke-width="1.1"/><circle cx="8.5" cy="9.5" r="1.6" stroke="#f4ead9" stroke-width="1.1"/><path d="M4 17l5.5-5.5L14 16l2.5-2.5L20.5 18" stroke="#f4ead9" stroke-width="1.1" stroke-linejoin="round"/></svg>',
+    video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#f4ead9" stroke-width="1.1"/><path d="M10 8.5l6 3.5-6 3.5v-7Z" fill="#f4ead9"/></svg>',
+  };
+
+  const WORKS = [
+    { id: 'hai', title: '灰と星屑', type: '小説', icon: 'novel', author: 'つむぎ', views: '8.4万', style: 'background: linear-gradient(135deg, var(--avatar-1), #7a3a2c 65%, var(--ink-soft));' },
+    { id: 'silent', title: 'サイレント・チャプター', type: '小説', icon: 'novel', author: '海野', views: '5.1万', style: 'background: linear-gradient(135deg, var(--avatar-3), #5c4a1f 65%, var(--ink-soft));' },
+    { id: 'yoru', title: '夜想曲のリベルタ', type: '小説', icon: 'novel', author: 'はると', views: '3.9万', style: 'background: linear-gradient(135deg, var(--avatar-2), #2e4468 65%, var(--ink-soft));' },
+    { id: 'hai-manga', title: '灰と星屑 コミカライズ版', type: '画像', icon: 'manga', author: 'みずき', views: '1.8万', style: 'background: linear-gradient(135deg, var(--avatar-1), #7a3a2c 65%, var(--ink-soft));' },
+    { id: 'hai-pv', title: '灰と星屑 PV映像', type: '動画', icon: 'video', author: 'つむぎ', views: '2.6万', style: 'background: linear-gradient(135deg, #6f8a5c, #384a2c 65%, var(--ink-soft));' },
+    { id: 'yoru-fanart', title: '夜想曲のリベルタ ファンアート集', type: '画像', icon: 'manga', author: 'りく', views: '3,200', style: 'background: linear-gradient(135deg, var(--avatar-2), #2e4468 65%, var(--ink-soft));' },
+    { id: 'yuki-blog', title: 'ゆきの読書ノート', type: 'ブログ', icon: 'blog', author: 'ゆき', views: '620', style: 'background: linear-gradient(135deg, var(--avatar-1), #7a3a2c 65%, var(--ink-soft));' },
+  ];
+
+  // ---- composer state ----
+  let attachedMedia = null;   // '画像' | '動画'
+  let quotedWork = null;      // WORKS entry
+
+  const attachPreview = document.getElementById('attach-preview');
+  const attachThumb = document.getElementById('attach-thumb');
+  const quotePreview = document.getElementById('quote-preview');
+  const paletteOverlay = document.getElementById('palette-overlay');
+  const paletteList = document.getElementById('palette-list');
+
+  function setAttachment(kind) {
+    attachedMedia = kind;
+    attachThumb.textContent = kind;
+    attachPreview.hidden = false;
+    document.getElementById('tool-image').classList.toggle('active', kind === '画像');
+    document.getElementById('tool-video').classList.toggle('active', kind === '動画');
+    openComposer();
+  }
+
+  function clearAttachment() {
+    attachedMedia = null;
+    attachPreview.hidden = true;
+    document.getElementById('tool-image').classList.remove('active');
+    document.getElementById('tool-video').classList.remove('active');
+  }
+
+  function setQuote(work) {
+    quotedWork = work;
+    document.getElementById('quote-preview-icon').setAttribute('style', work.style);
+    document.getElementById('quote-preview-icon').innerHTML = WORK_ICONS[work.icon];
+    document.getElementById('quote-preview-title').textContent = work.title;
+    document.getElementById('quote-preview-meta').textContent = work.type + ' ・ ' + work.author;
+    quotePreview.hidden = false;
+    document.getElementById('tool-quote').classList.add('active');
+    openComposer();
+  }
+
+  function clearQuote() {
+    quotedWork = null;
+    quotePreview.hidden = true;
+    document.getElementById('tool-quote').classList.remove('active');
+  }
+
+  // ---- 作品パレット ----
+  function openPalette() {
+    paletteList.innerHTML = WORKS.map(w => `
+      <button class="palette-item" type="button" data-id="${w.id}">
+        <span class="palette-item-icon" style="${w.style}">${WORK_ICONS[w.icon]}</span>
+        <span class="palette-item-body">
+          <span class="palette-item-title">${w.title}</span>
+          <span class="palette-item-meta">${w.type} ・ ${w.author} ・ 閲覧 ${w.views}</span>
+        </span>
+      </button>
+    `).join('');
+    paletteList.querySelectorAll('.palette-item').forEach(item => {
+      item.addEventListener('click', () => {
+        setQuote(WORKS.find(w => w.id === item.dataset.id));
+        closePalette();
+      });
+    });
+    paletteOverlay.hidden = false;
+  }
+
+  function closePalette() { paletteOverlay.hidden = true; }
+
+  document.getElementById('tool-image').addEventListener('click', () => setAttachment('画像'));
+  document.getElementById('tool-video').addEventListener('click', () => setAttachment('動画'));
+  document.getElementById('tool-quote').addEventListener('click', openPalette);
+  document.getElementById('attach-remove').addEventListener('click', clearAttachment);
+  document.getElementById('quote-remove').addEventListener('click', clearQuote);
+  document.getElementById('palette-close').addEventListener('click', closePalette);
+  paletteOverlay.addEventListener('click', e => { if (e.target === paletteOverlay) closePalette(); });
+
+  function openComposer() {
+    composer.classList.add('is-active');
+    const activeTabKey = document.querySelector('.tab.active').dataset.feed;
+    if (communityNames[activeTabKey] && !composerSelect.value) composerSelect.value = activeTabKey;
+    refreshSubmitState();
+  }
+
+  function closeComposer() {
+    composer.classList.remove('is-active');
+    composerInput.value = '';
+    composerInput.style.height = 'auto';
+    composerSelect.value = '';
+    composerHint.classList.remove('show');
+    clearAttachment();
+    clearQuote();
+    refreshSubmitState();
+  }
+
+  function refreshSubmitState() {
+    const hasContent = composerInput.value.trim().length > 0 || attachedMedia || quotedWork;
+    composerSubmit.disabled = !(hasContent && composerSelect.value !== '');
+  }
+
+  composerInput.addEventListener('focus', openComposer);
+  composerInput.addEventListener('input', () => {
+    composerInput.style.height = 'auto';
+    composerInput.style.height = composerInput.scrollHeight + 'px';
+    refreshSubmitState();
+  });
+  composerSelect.addEventListener('change', () => {
+    composerHint.classList.remove('show');
+    refreshSubmitState();
+  });
+  composerCancel.addEventListener('click', closeComposer);
+
+  function buildPostNode(text, communityKey, media, quote) {
+    const article = document.createElement('article');
+    article.className = 'post is-new';
+    const mediaHTML = media ? `<div class="post-media">${media}（デモ）</div>` : '';
+    const quoteHTML = quote ? `
+      <a class="quote-embed" href="works-view.html?id=${quote.id}">
+        <span class="quote-embed-icon" style="${quote.style}">${WORK_ICONS[quote.icon]}</span>
+        <span class="quote-embed-body">
+          <span class="quote-embed-title">${quote.title} <span class="badge badge-type">${quote.type}</span></span>
+          <span class="quote-embed-meta">${quote.author} ・ 閲覧 ${quote.views}</span>
+        </span>
+        <span class="quote-embed-arrow" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4.5L5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>` : '';
+    article.innerHTML = `
+      <div class="post-head">
+        <div class="avatar a1">あ</div>
+        <div class="post-meta">
+          <span class="name">あなた</span>
+          <span class="community">${communityNames[communityKey]}</span>
+        </div>
+        <time class="time">たった今</time>
+      </div>
+      <p class="body"></p>
+      ${mediaHTML}
+      ${quoteHTML}
+      <div class="engage">
+        <button class="engage-btn like" aria-label="いいね">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13.8s-5.6-3.4-5.6-7.3a3.1 3.1 0 0 1 5.6-1.9 3.1 3.1 0 0 1 5.6 1.9c0 3.9-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          0
+        </button>
+        <button class="engage-btn" aria-label="コメント">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3.5h11v7.2h-6l-3 2.6v-2.6h-2V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          0
+        </button>
+      </div>
+    `;
+    const bodyEl = article.querySelector('.body');
+    if (text) { bodyEl.textContent = text; } else { bodyEl.remove(); }
+    article.querySelector('.engage-btn.like').addEventListener('click', function () {
+      const countEl = this.childNodes[this.childNodes.length - 1];
+      const current = parseInt(this.textContent.trim(), 10);
+      const liked = this.classList.toggle('active');
+      countEl.textContent = ' ' + (liked ? current + 1 : current - 1);
+    });
+    return article;
+  }
+
+  composerSubmit.addEventListener('click', () => {
+    const text = composerInput.value.trim();
+    const communityKey = composerSelect.value;
+    if (!text && !attachedMedia && !quotedWork) return;
+    if (!communityKey) {
+      composerHint.classList.add('show');
+      return;
+    }
+    const media = attachedMedia, quote = quotedWork;
+    feeds[communityKey].prepend(buildPostNode(text, communityKey, media, quote));
+    feeds.follow.prepend(buildPostNode(text, communityKey, media, quote));
+    closeComposer();
+    const targetTab = document.querySelector(`.tab[data-feed="${communityKey}"]`);
+    activateTab(targetTab);
+  });
+
+  // ---- 作品ページの「引用」ボタンから遷移してきた場合 ----
+  (function handleIncomingQuote() {
+    const p = new URLSearchParams(window.location.search);
+    const qid = p.get('quote');
+    if (!qid) return;
+    const work = WORKS.find(w => w.id === qid) || {
+      id: qid,
+      title: p.get('title') || '作品',
+      type: p.get('type') || '作品',
+      author: p.get('author') || '',
+      views: '—',
+      icon: p.get('type') === '動画' ? 'video' : (p.get('type') === '画像' ? 'manga' : 'novel'),
+      style: 'background: linear-gradient(135deg, var(--avatar-1), #7a3a2c 65%, var(--ink-soft));',
+    };
+    setQuote(work);
+    composerInput.focus();
+    history.replaceState(null, '', 'index.html');
+  })();
+
+  // ---- left sidebar navigation (only timeline is implemented in this demo) ----
+  let toastTimer;
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.tagName === 'A') return;
+      showToast('この画面は準備中です');
+    });
+  });
+
+  document.querySelector('.sidenav-profile').addEventListener('click', () => {
+    showToast('この画面は準備中です');
+  });
+</script>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
